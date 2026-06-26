@@ -146,6 +146,7 @@ class KalibrrScraper(BaseScraper):
                     source='kalibrr',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -183,6 +184,7 @@ class KalibrrScraper(BaseScraper):
                     url=job_url,
                     source='kalibrr',
                     salary=salary,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -227,6 +229,7 @@ class KalibrrScraper(BaseScraper):
                     url=job_url,
                     source='kalibrr',
                     salary=salary,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -246,6 +249,25 @@ class KalibrrScraper(BaseScraper):
                 for match in matches:
                     text = self._clean_text(match.text)
                     if text:
+                        return text
+            except Exception:
+                continue
+        return ''
+
+    def _extract_description(self, card: object) -> str:
+        """Extract a short description or qualifications snippet from the job card."""
+        for selector in [
+            'p[class*="description"]',
+            'div[class*="description"]',
+            'span[class*="description"]',
+            'p.k-text-xs',
+            'p',
+        ]:
+            try:
+                els = card.css(selector)
+                for el in els:
+                    text = self._clean_text(el.text)
+                    if text and len(text) > 15:
                         return text
             except Exception:
                 continue

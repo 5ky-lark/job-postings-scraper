@@ -151,6 +151,7 @@ class IndeedScraper(BaseScraper):
                     source='indeed',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -186,6 +187,7 @@ class IndeedScraper(BaseScraper):
                     source='indeed',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -219,6 +221,7 @@ class IndeedScraper(BaseScraper):
                     source='indeed',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -363,4 +366,17 @@ class IndeedScraper(BaseScraper):
                 if href:
                     return href if href.startswith('http') else f'{_BASE_URL}{href}'
 
+        return ''
+
+    def _extract_description(self, card: object) -> str:
+        """Extract a short description or qualifications snippet from the job card."""
+        for selector in ['.job-snippet', 'div[class*="job-snippet"]', '.summary', '.metadata']:
+            try:
+                els = card.css(selector)
+                if els:
+                    text = self._clean_text(els[0].text)
+                    if text:
+                        return text
+            except Exception:
+                continue
         return ''

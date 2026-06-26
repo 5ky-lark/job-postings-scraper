@@ -139,6 +139,7 @@ class JobStreetScraper(BaseScraper):
                     source='jobstreet',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -185,6 +186,7 @@ class JobStreetScraper(BaseScraper):
                     source='jobstreet',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(parent_card) if parent_card else '',
                 )
             )
         return jobs
@@ -218,6 +220,7 @@ class JobStreetScraper(BaseScraper):
                     source='jobstreet',
                     salary=salary,
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -374,3 +377,22 @@ class JobStreetScraper(BaseScraper):
                 if links:
                     return card
         return None
+
+    def _extract_description(self, card: object) -> str:
+        """Extract a short description or qualifications snippet from the job card."""
+        for selector in [
+            '[data-automation="jobCardSnippet"]',
+            '[data-automation="job-details-transfer"]',
+            'ul[class*="bullet"]',
+            'li[class*="bullet"]',
+            'div[class*="snippet"]',
+        ]:
+            try:
+                els = card.css(selector)
+                if els:
+                    text = self._clean_text(els[0].text)
+                    if text:
+                        return text
+            except Exception:
+                continue
+        return ''

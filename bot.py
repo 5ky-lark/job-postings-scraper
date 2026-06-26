@@ -111,9 +111,16 @@ def _build_job_embed(job: dict) -> discord.Embed:
         f"📍 **Location:** {location}\n"
         f"💰 **Salary:** {salary}\n"
         f"📅 **Posted:** {date_posted}\n"
-        f"{emoji} **Source:** {source.capitalize()}\n\n"
-        f"🔗 **[Apply / View Listing]({url})**"
+        f"{emoji} **Source:** {source.capitalize()}\n"
     )
+
+    desc_snippet = job.get("description", "")
+    if desc_snippet:
+        cleaned_snippet = desc_snippet.strip()
+        if cleaned_snippet:
+            description += f"\n📝 **Requirements/Info:**\n*{truncate(cleaned_snippet, 180)}*\n"
+
+    description += f"\n🔗 **[Apply / View Listing]({url})**"
 
     embed = discord.Embed(
         title=title,

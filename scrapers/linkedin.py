@@ -148,6 +148,7 @@ class LinkedInScraper(BaseScraper):
                     source='linkedin',
                     salary='',  # LinkedIn guest view rarely shows salary
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -180,6 +181,7 @@ class LinkedInScraper(BaseScraper):
                     source='linkedin',
                     salary='',
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -216,6 +218,7 @@ class LinkedInScraper(BaseScraper):
                     source='linkedin',
                     salary='',
                     date_posted=date_posted,
+                    description=self._extract_description(card),
                 )
             )
         return jobs
@@ -259,6 +262,7 @@ class LinkedInScraper(BaseScraper):
                     source='linkedin',
                     salary='',
                     date_posted=date_posted,
+                    description=self._extract_description(item),
                 )
             )
         return jobs
@@ -353,3 +357,16 @@ class LinkedInScraper(BaseScraper):
         if '?' in url:
             url = url.split('?')[0]
         return url
+
+    def _extract_description(self, card: object) -> str:
+        """Extract a short description or qualifications snippet from the job card."""
+        for selector in ['.job-search-card__snippet', '[class*="snippet"]', '[class*="description"]', 'p']:
+            try:
+                els = card.css(selector)
+                if els:
+                    text = self._clean_text(els[0].text)
+                    if text and len(text) > 10:
+                        return text
+            except Exception:
+                continue
+        return ''
