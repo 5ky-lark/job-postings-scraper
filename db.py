@@ -41,18 +41,11 @@ def _get_connection() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    """Create the ``jobs`` table if it does not already exist.
+    """Create the database tables if they do not already exist.
 
-    The table schema:
-        - ``id``          – SHA-256 hash of the URL (TEXT PRIMARY KEY)
-        - ``title``       – Job title (TEXT)
-        - ``company``     – Employer name (TEXT)
-        - ``location``    – Job location (TEXT)
-        - ``url``         – Original listing URL (TEXT)
-        - ``source``      – Which job board it came from (TEXT)
-        - ``salary``      – Salary info, if available (TEXT)
-        - ``date_posted`` – Date the listing was posted (TEXT)
-        - ``first_seen``  – When we first scraped it (DATETIME, auto-filled)
+    Creates:
+        - jobs table (id, title, company, location, url, source, salary, date_posted, first_seen)
+        - scraper_metadata table (key, value) for persistence of configurations or execution times.
     """
     with _get_connection() as conn:
         conn.execute(
@@ -67,6 +60,14 @@ def init_db() -> None:
                 salary      TEXT,
                 date_posted TEXT,
                 first_seen  DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS scraper_metadata (
+                key         TEXT PRIMARY KEY,
+                value       TEXT
             )
             """
         )
@@ -211,3 +212,44 @@ def get_recent_jobs(hours: int = 24) -> list[dict[str, Any]]:
         ).fetchall()
 
     return [dict(row) for row in rows]
+
+
+def get_last_run(source: str) -> datetime | None:
+    """Get the last successful scrape time for a given source.
+
+    Args:
+        source: Scraper source name (e.g. 'kalibrr').
+
+    Returns:
+        Datetime object in UTC if found, otherwise None.
+    """
+    with _get_connection() as conn:
+        row = conn.execute(
+            "SELECT value FROM scraper_metadata WHERE key = ?",
+            (f"last_run_{source}",),
+        ).fetchone()
+
+    if row:
+        try:
+            dt = datetime.fromisoformat(row["value"])
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except ValueError:
+            pass
+    return None
+
+
+def set_last_run(source: str, dt: datetime) -> None:
+    """Update the last successful scrape time for a given source.
+
+    Args:
+        source: Scraper source name.
+        dt: Datetime object.
+    """
+    with _get_connection() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO scraper_metadata (key, value) VALUES (?, ?)",
+            (f"last_run_{source}", dt.isoformat()),
+        )
+        conn.commit()

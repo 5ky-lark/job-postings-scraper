@@ -26,7 +26,7 @@ Environment variables (set in .env):
 import asyncio
 import logging
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import discord
 from discord.ext import commands, tasks
@@ -290,11 +290,25 @@ async def _before_scheduled() -> None:
 # Real-time individual scraping loops per source
 @tasks.loop(minutes=config.KALIBRR_INTERVAL_MIN)
 async def scrape_kalibrr_task() -> None:
+    from db import get_last_run, set_last_run
+    last_run = get_last_run("kalibrr")
+    if last_run:
+        elapsed = datetime.now(timezone.utc) - last_run
+        # 10s buffer to prevent slight timing mismatches
+        if elapsed < timedelta(minutes=config.KALIBRR_INTERVAL_MIN) - timedelta(seconds=10):
+            next_run_in = timedelta(minutes=config.KALIBRR_INTERVAL_MIN) - elapsed
+            logger.info(
+                f"Kalibrr: Ran recently ({elapsed.total_seconds() / 60:.1f}m ago). "
+                f"Next run in {next_run_in.total_seconds() / 60:.1f}m. Skipping startup run."
+            )
+            return
+
     async with _scrape_lock:
         logger.info("Realtime: Kalibrr scrape starting...")
         try:
             all_jobs, new_jobs, elapsed = await _run_scrapers(["kalibrr"])
             logger.info(f"Realtime: Kalibrr scrape finished in {elapsed:.1f}s. New jobs: {len(new_jobs)}")
+            set_last_run("kalibrr", datetime.now(timezone.utc))
             if new_jobs and config.DISCORD_WEBHOOK_URL:
                 sender = DiscordSender(config.DISCORD_WEBHOOK_URL)
                 await sender.send_jobs(new_jobs)
@@ -309,11 +323,24 @@ async def before_kalibrr() -> None:
 
 @tasks.loop(minutes=config.INDEED_INTERVAL_MIN)
 async def scrape_indeed_task() -> None:
+    from db import get_last_run, set_last_run
+    last_run = get_last_run("indeed")
+    if last_run:
+        elapsed = datetime.now(timezone.utc) - last_run
+        if elapsed < timedelta(minutes=config.INDEED_INTERVAL_MIN) - timedelta(seconds=10):
+            next_run_in = timedelta(minutes=config.INDEED_INTERVAL_MIN) - elapsed
+            logger.info(
+                f"Indeed: Ran recently ({elapsed.total_seconds() / 60:.1f}m ago). "
+                f"Next run in {next_run_in.total_seconds() / 60:.1f}m. Skipping startup run."
+            )
+            return
+
     async with _scrape_lock:
         logger.info("Realtime: Indeed scrape starting...")
         try:
             all_jobs, new_jobs, elapsed = await _run_scrapers(["indeed"])
             logger.info(f"Realtime: Indeed scrape finished in {elapsed:.1f}s. New jobs: {len(new_jobs)}")
+            set_last_run("indeed", datetime.now(timezone.utc))
             if new_jobs and config.DISCORD_WEBHOOK_URL:
                 sender = DiscordSender(config.DISCORD_WEBHOOK_URL)
                 await sender.send_jobs(new_jobs)
@@ -330,11 +357,24 @@ async def before_indeed() -> None:
 
 @tasks.loop(minutes=config.JOBSTREET_INTERVAL_MIN)
 async def scrape_jobstreet_task() -> None:
+    from db import get_last_run, set_last_run
+    last_run = get_last_run("jobstreet")
+    if last_run:
+        elapsed = datetime.now(timezone.utc) - last_run
+        if elapsed < timedelta(minutes=config.JOBSTREET_INTERVAL_MIN) - timedelta(seconds=10):
+            next_run_in = timedelta(minutes=config.JOBSTREET_INTERVAL_MIN) - elapsed
+            logger.info(
+                f"Jobstreet: Ran recently ({elapsed.total_seconds() / 60:.1f}m ago). "
+                f"Next run in {next_run_in.total_seconds() / 60:.1f}m. Skipping startup run."
+            )
+            return
+
     async with _scrape_lock:
         logger.info("Realtime: Jobstreet scrape starting...")
         try:
             all_jobs, new_jobs, elapsed = await _run_scrapers(["jobstreet"])
             logger.info(f"Realtime: Jobstreet scrape finished in {elapsed:.1f}s. New jobs: {len(new_jobs)}")
+            set_last_run("jobstreet", datetime.now(timezone.utc))
             if new_jobs and config.DISCORD_WEBHOOK_URL:
                 sender = DiscordSender(config.DISCORD_WEBHOOK_URL)
                 await sender.send_jobs(new_jobs)
@@ -351,11 +391,24 @@ async def before_jobstreet() -> None:
 
 @tasks.loop(minutes=config.LINKEDIN_INTERVAL_MIN)
 async def scrape_linkedin_task() -> None:
+    from db import get_last_run, set_last_run
+    last_run = get_last_run("linkedin")
+    if last_run:
+        elapsed = datetime.now(timezone.utc) - last_run
+        if elapsed < timedelta(minutes=config.LINKEDIN_INTERVAL_MIN) - timedelta(seconds=10):
+            next_run_in = timedelta(minutes=config.LINKEDIN_INTERVAL_MIN) - elapsed
+            logger.info(
+                f"LinkedIn: Ran recently ({elapsed.total_seconds() / 60:.1f}m ago). "
+                f"Next run in {next_run_in.total_seconds() / 60:.1f}m. Skipping startup run."
+            )
+            return
+
     async with _scrape_lock:
         logger.info("Realtime: LinkedIn scrape starting...")
         try:
             all_jobs, new_jobs, elapsed = await _run_scrapers(["linkedin"])
             logger.info(f"Realtime: LinkedIn scrape finished in {elapsed:.1f}s. New jobs: {len(new_jobs)}")
+            set_last_run("linkedin", datetime.now(timezone.utc))
             if new_jobs and config.DISCORD_WEBHOOK_URL:
                 sender = DiscordSender(config.DISCORD_WEBHOOK_URL)
                 await sender.send_jobs(new_jobs)
