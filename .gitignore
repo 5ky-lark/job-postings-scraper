@@ -1,0 +1,19 @@
+# Environments
+.env
+
+# Databases
+*.db
+*.db-journal
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and virtual environments
+.vscode/
+.idea/
+venv/
+.venv/
+env/
+.agents/

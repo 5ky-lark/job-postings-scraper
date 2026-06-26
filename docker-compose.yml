@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # Job Scraper Discord Bot (interactive commands + scheduled scraping)
+  bot:
+    build: .
+    container_name: job-scraper-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./jobs.db:/app/jobs.db
+    # To run the bot (default)
+    command: python bot.py
+
+  # Job Scraper Standalone Scheduler (only sends to Webhook, no active bot listening)
+  # To run this instead, use: docker-compose up -d scheduler
+  scheduler:
+    build: .
+    container_name: job-scraper-scheduler
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./jobs.db:/app/jobs.db
+    command: python main.py

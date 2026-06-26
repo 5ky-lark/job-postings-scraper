@@ -1,0 +1,5 @@
+scrapling[all]
+httpx
+apscheduler
+python-dotenv
+discord.py
