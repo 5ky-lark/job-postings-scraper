@@ -1,6 +1,6 @@
 # Software Developer Job Posting Scraper
 
-A robust Python application that automatically scrapes software developer job postings from 4 Philippine job boards and notifies a Discord channel via webhook.
+Scrapes software developer job postings from 4 Philippine job boards and notifies a Discord channel via webhook.
 
 ## Features
 
