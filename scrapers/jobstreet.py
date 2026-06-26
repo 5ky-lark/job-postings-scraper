@@ -26,7 +26,7 @@ _DEFAULT_KEYWORDS: list[str] = [
     'java-developer',
 ]
 
-_BASE_URL = 'https://www.jobstreet.com.ph'
+_BASE_URL = 'https://ph.jobstreet.com'
 
 
 class JobStreetScraper(BaseScraper):

@@ -93,7 +93,7 @@ def truncate(text: str, max_length: int = 200) -> str:
 
 
 def format_time_ago(dt_string: str) -> str:
-    """Convert a datetime string to a human-readable *"X time ago"* label.
+    """Convert a datetime string to a human-readable exact duration elapsed.
 
     Supports:
 
@@ -107,8 +107,8 @@ def format_time_ago(dt_string: str) -> str:
         dt_string: A date/time string or relative label.
 
     Returns:
-        A human-friendly relative time string such as ``"2 hours ago"`` or
-        ``"3 days ago"``.  Returns the original string unchanged when
+        A human-friendly relative time string such as ``"2 days 3 hrs 5 mins ago"``
+        or ``"5 mins ago"``. Returns the original string unchanged when
         parsing fails or when it is already in relative form.
     """
     if not dt_string:
@@ -160,21 +160,25 @@ def format_time_ago(dt_string: str) -> str:
         return "Just now"
     if total_seconds < 60:
         return "Just now"
-    if total_seconds < 3600:
-        minutes = total_seconds // 60
-        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
-    if total_seconds < 86400:
-        hours = total_seconds // 3600
-        return f"{hours} hour{'s' if hours != 1 else ''} ago"
-    if total_seconds < 2592000:  # ~30 days
-        days = total_seconds // 86400
-        return f"{days} day{'s' if days != 1 else ''} ago"
-    if total_seconds < 31536000:  # ~365 days
-        months = total_seconds // 2592000
-        return f"{months} month{'s' if months != 1 else ''} ago"
 
-    years = total_seconds // 31536000
-    return f"{years} year{'s' if years != 1 else ''} ago"
+    days = total_seconds // 86400
+    remaining_seconds = total_seconds % 86400
+    hours = remaining_seconds // 3600
+    remaining_seconds = remaining_seconds % 3600
+    minutes = remaining_seconds // 60
+
+    parts = []
+    if days > 0:
+        parts.append(f"{days} day{'s' if days != 1 else ''}")
+    if hours > 0:
+        parts.append(f"{hours} hr{'s' if hours != 1 else ''}")
+    if minutes > 0:
+        parts.append(f"{minutes} min{'s' if minutes != 1 else ''}")
+
+    if not parts:
+        return "Just now"
+
+    return " ".join(parts) + " ago"
 
 
 def matches_resume(title: str) -> bool:
