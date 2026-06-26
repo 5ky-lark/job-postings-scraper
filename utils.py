@@ -175,3 +175,48 @@ def format_time_ago(dt_string: str) -> str:
 
     years = total_seconds // 31536000
     return f"{years} year{'s' if years != 1 else ''} ago"
+
+
+def matches_resume(title: str) -> bool:
+    """Check if the job title matches the user's technical skills profile.
+    
+    Excludes jobs explicitly targeting languages/technologies outside of
+    the user's core stack (like Java, PHP, Angular, Vue, .NET, DevOps, QA, etc.).
+    
+    Args:
+        title: The job title string to check.
+        
+    Returns:
+        True if the job is a potential match, False otherwise.
+    """
+    if not title:
+        return False
+        
+    title_lower = title.lower()
+    
+    # Negative keywords: technologies NOT in the user's stack
+    # Exception: "javascript" contains "java", so we handle that specifically.
+    negative_kws = [
+        "c#", "c++", "c-sharp", "cplusplus", ".net", "php", "laravel", 
+        "wordpress", "angular", "vue", "ruby", "rails", "android", "ios", 
+        "flutter", "swift", "kotlin", "cobol", "sap", "salesforce", 
+        "devops", "qa engineer", "quality assurance", "test engineer", 
+        "manual tester", "selenium", "sysadmin", "system administrator", 
+        "database administrator", "dba", "blockchain", "web3", "rust"
+    ]
+    
+    # Handle the Javascript exception
+    if "java" in title_lower:
+        # Check if the title actually contains "javascript" or "java script"
+        # If it does, we strip those out and check if "java" is still present
+        stripped_java = title_lower.replace("javascript", "").replace("java script", "")
+        if "java" in stripped_java:
+            # Contains pure "java" (e.g. Java Developer) -> NOT a match
+            return False
+            
+    # Check all other negative keywords
+    for kw in negative_kws:
+        if kw in title_lower:
+            return False
+            
+    return True

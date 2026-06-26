@@ -138,9 +138,14 @@ def save_jobs(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         A list of job dicts that were actually new and inserted.
     """
     new_jobs: list[dict[str, Any]] = []
+    from utils import matches_resume
 
     with _get_connection() as conn:
         for job in jobs:
+            # Skip job if it doesn't match user's resume skills
+            if not matches_resume(job.get("title", "")):
+                continue
+
             job_id = _url_hash(job["url"])
             existing = conn.execute(
                 "SELECT 1 FROM jobs WHERE id = ?", (job_id,)
