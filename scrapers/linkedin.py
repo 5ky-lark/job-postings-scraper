@@ -98,7 +98,7 @@ class LinkedInScraper(BaseScraper):
         page = await StealthyFetcher.async_fetch(
             url,
             headless=True,
-            real_chrome=True,
+            real_chrome=False,
             google_search=True,
             network_idle=True,
             disable_resources=True,
