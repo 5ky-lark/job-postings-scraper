@@ -105,57 +105,26 @@ class DiscordSender:
         title_text = job.get("title", "Untitled Position")
         url = job.get("url", "")
 
-        # Build description from salary or a generic note.
-        salary = job.get("salary", "")
-        if salary:
-            description = f"💰 **Salary:** {truncate(salary, 150)}"
-        else:
-            description = "💼 *Salary not specified*"
+        company = job.get("company", "N/A") or "N/A"
+        location = job.get("location", "N/A") or "N/A"
+        salary = job.get("salary", "") or "Not specified"
+        date_posted = job.get("date_posted", "") or "Recently"
 
-        fields: list[dict[str, Any]] = [
-            {
-                "name": "🏢 Company",
-                "value": job.get("company", "N/A") or "N/A",
-                "inline": True,
-            },
-            {
-                "name": "📍 Location",
-                "value": job.get("location", "N/A") or "N/A",
-                "inline": True,
-            },
-            {
-                "name": f"{icon} Source",
-                "value": source.capitalize(),
-                "inline": True,
-            },
-        ]
-
-        if salary:
-            fields.append(
-                {
-                    "name": "💰 Salary",
-                    "value": truncate(salary, 100),
-                    "inline": True,
-                }
-            )
-
-        # Footer — prefer date_posted, fall back to first_seen.
-        date_posted = job.get("date_posted", "")
-        first_seen = job.get("first_seen", "")
-        if date_posted:
-            footer_text = f"Posted: {date_posted}"
-        elif first_seen:
-            footer_text = f"Found: {first_seen}"
-        else:
-            footer_text = "Job Scraper"
+        description = (
+            f"🏢 **Company:** {company}\n"
+            f"📍 **Location:** {location}\n"
+            f"💰 **Salary:** {salary}\n"
+            f"📅 **Posted:** {date_posted}\n"
+            f"{icon} **Source:** {source.capitalize()}\n\n"
+            f"🔗 **[Apply / View Listing]({url})**"
+        )
 
         embed: dict[str, Any] = {
             "title": truncate(title_text, 256),
             "url": url,
             "description": description,
             "color": color,
-            "fields": fields,
-            "footer": {"text": footer_text},
+            "footer": {"text": f"Job Scraper • {source.capitalize()}"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         return embed

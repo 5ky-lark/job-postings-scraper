@@ -101,40 +101,28 @@ def _build_job_embed(job: dict) -> discord.Embed:
     title = job.get("title", "Untitled Position")
     url = job.get("url", "")
 
+    company = job.get("company", "N/A") or "N/A"
+    location = job.get("location", "N/A") or "N/A"
+    salary = job.get("salary", "") or "Not specified"
+    date_posted = job.get("date_posted", "") or "Recently"
+
+    description = (
+        f"🏢 **Company:** {company}\n"
+        f"📍 **Location:** {location}\n"
+        f"💰 **Salary:** {salary}\n"
+        f"📅 **Posted:** {date_posted}\n"
+        f"{emoji} **Source:** {source.capitalize()}\n\n"
+        f"🔗 **[Apply / View Listing]({url})**"
+    )
+
     embed = discord.Embed(
-        title=f"{title}",
+        title=title,
         url=url if url else None,
+        description=description,
         color=color,
         timestamp=datetime.now(timezone.utc),
     )
-
-    # Fields
-    embed.add_field(
-        name="🏢 Company",
-        value=job.get("company") or "N/A",
-        inline=True,
-    )
-    embed.add_field(
-        name="📍 Location",
-        value=job.get("location") or "N/A",
-        inline=True,
-    )
-    embed.add_field(
-        name=f"{emoji} Source",
-        value=source.capitalize(),
-        inline=True,
-    )
-
-    salary = job.get("salary", "")
-    if salary:
-        embed.add_field(name="💰 Salary", value=salary[:100], inline=True)
-
-    # Footer
-    date_posted = job.get("date_posted", "")
-    if date_posted:
-        embed.set_footer(text=f"Posted: {date_posted}")
-    else:
-        embed.set_footer(text="Job Scraper")
+    embed.set_footer(text=f"Job Scraper • {source.capitalize()}")
 
     return embed
 
