@@ -107,17 +107,11 @@ def _build_job_embed(job: dict) -> discord.Embed:
     date_posted = job.get("date_posted", "").strip()
     first_seen = job.get("first_seen", "")
 
-    discovered_ago = ""
-    if first_seen:
-        from utils import format_time_ago
-        discovered_ago = format_time_ago(first_seen)
-
     if date_posted:
         display_date = date_posted
-        if discovered_ago and discovered_ago != "Just now":
-            display_date += f" (Discovered {discovered_ago})"
-    elif discovered_ago:
-        display_date = discovered_ago
+    elif first_seen:
+        from utils import format_time_ago
+        display_date = format_time_ago(first_seen)
     else:
         display_date = "Just now"
 
