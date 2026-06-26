@@ -33,12 +33,6 @@ def _get_env_int(key: str, default: int) -> int:
         return default
 
 
-CHECK_INTERVAL_HOURS: int = _get_env_int("CHECK_INTERVAL_HOURS", 6)
-"""How often (in hours) to run the full scraping cycle (main.py scheduler mode)."""
-
-SCRAPE_MODE: str = os.getenv("SCRAPE_MODE", "realtime").lower()
-"""Scraping mode: 'realtime' (continuous per-source loops) or 'scheduled' (single interval)."""
-
 # Per-source intervals in minutes (used in realtime mode)
 KALIBRR_INTERVAL_MIN: int = _get_env_int("KALIBRR_INTERVAL_MIN", 30)
 INDEED_INTERVAL_MIN: int = _get_env_int("INDEED_INTERVAL_MIN", 30)

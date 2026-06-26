@@ -209,7 +209,7 @@ async def run_single_source_scrape(source_name: str) -> None:
 async def run_scheduler() -> None:
     """Start the APScheduler loop that runs scrape cycles on an interval."""
     init_db()
-    logger.info(f"Job Scraper started in mode: {config.SCRAPE_MODE}")
+    logger.info("Job Scraper started in realtime mode")
     logger.info(
         f"Keywords: {len(config.SEARCH_KEYWORDS)} | "
         f"Locations: {config.LOCATIONS}"
@@ -218,43 +218,29 @@ async def run_scheduler() -> None:
 
     scheduler = AsyncIOScheduler()
 
-    if config.SCRAPE_MODE == "realtime":
-        logger.info("Scheduling individual scrapers with staggered realtime loops:")
-        from datetime import datetime, timedelta
+    logger.info("Scheduling individual scrapers with staggered realtime loops:")
+    from datetime import datetime, timedelta
 
-        for source, interval in config.SOURCE_INTERVALS.items():
-            logger.info(f"  - {source}: every {interval} minutes")
+    for source, interval in config.SOURCE_INTERVALS.items():
+        logger.info(f"  - {source}: every {interval} minutes")
+        
+        # Stagger startup
+        offset_seconds = 0
+        if source == "indeed":
+            offset_seconds = 30
+        elif source == "jobstreet":
+            offset_seconds = 60
+        elif source == "linkedin":
+            offset_seconds = 90
             
-            # Stagger startup
-            offset_seconds = 0
-            if source == "indeed":
-                offset_seconds = 30
-            elif source == "jobstreet":
-                offset_seconds = 60
-            elif source == "linkedin":
-                offset_seconds = 90
-                
-            start_date = datetime.now() + timedelta(seconds=offset_seconds)
+        start_date = datetime.now() + timedelta(seconds=offset_seconds)
 
-            scheduler.add_job(
-                run_single_source_scrape,
-                trigger=IntervalTrigger(minutes=interval, start_date=start_date),
-                args=[source],
-                id=f"scrape_{source}",
-                name=f"Job Scrape {source.capitalize()}",
-                max_instances=1,
-                replace_existing=True,
-            )
-    else:
-        # Run once immediately on startup
-        await run_scrape_cycle()
-
-        # Then schedule recurring runs
         scheduler.add_job(
-            run_scrape_cycle,
-            trigger=IntervalTrigger(hours=config.CHECK_INTERVAL_HOURS),
-            id="scrape_cycle",
-            name="Job Scrape Cycle",
+            run_single_source_scrape,
+            trigger=IntervalTrigger(minutes=interval, start_date=start_date),
+            args=[source],
+            id=f"scrape_{source}",
+            name=f"Job Scrape {source.capitalize()}",
             max_instances=1,
             replace_existing=True,
         )

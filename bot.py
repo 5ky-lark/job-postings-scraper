@@ -252,55 +252,15 @@ async def on_ready() -> None:
     init_db()
     logger.info("Database initialized.")
 
-    if config.SCRAPE_MODE == "realtime":
-        logger.info("Realtime scraping mode active. Starting staggered loops...")
-        if not scrape_kalibrr_task.is_running():
-            scrape_kalibrr_task.start()
-        if not scrape_indeed_task.is_running():
-            scrape_indeed_task.start()
-        if not scrape_jobstreet_task.is_running():
-            scrape_jobstreet_task.start()
-        if not scrape_linkedin_task.is_running():
-            scrape_linkedin_task.start()
-    else:
-        # Start the scheduled scrape loop
-        if not scheduled_scrape.is_running():
-            scheduled_scrape.start()
-            logger.info(
-                f"Scheduled scraping started (every {config.CHECK_INTERVAL_HOURS}h)"
-            )
-
-
-# ---------------------------------------------------------------------------
-# Scheduled task (runs every CHECK_INTERVAL_HOURS or at staggered intervals)
-# ---------------------------------------------------------------------------
-
-
-@tasks.loop(hours=config.CHECK_INTERVAL_HOURS)
-async def scheduled_scrape() -> None:
-    """Automatically scrape all sources on a schedule."""
-    if _scrape_lock.locked():
-        logger.info("Scheduled scrape skipped — another scrape is running.")
-        return
-
-    async with _scrape_lock:
-        logger.info("Scheduled scrape starting...")
-        all_jobs, new_jobs, elapsed = await _run_scrapers()
-
-        # Send to webhook if there are new jobs
-        if new_jobs and config.DISCORD_WEBHOOK_URL:
-            sender = DiscordSender(config.DISCORD_WEBHOOK_URL)
-            try:
-                await sender.send_jobs(new_jobs)
-                logger.info(f"Sent {len(new_jobs)} jobs to webhook")
-            except Exception:
-                logger.exception("Failed to send to webhook")
-
-
-@scheduled_scrape.before_loop
-async def _before_scheduled() -> None:
-    """Wait until the bot is ready before starting the loop."""
-    await bot.wait_until_ready()
+    logger.info("Realtime scraping mode active. Starting staggered loops...")
+    if not scrape_kalibrr_task.is_running():
+        scrape_kalibrr_task.start()
+    if not scrape_indeed_task.is_running():
+        scrape_indeed_task.start()
+    if not scrape_jobstreet_task.is_running():
+        scrape_jobstreet_task.start()
+    if not scrape_linkedin_task.is_running():
+        scrape_linkedin_task.start()
 
 
 # Real-time individual scraping loops per source
@@ -603,42 +563,28 @@ async def cmd_stats(ctx: commands.Context) -> None:
         )
 
     # Scheduler status
-    if config.SCRAPE_MODE == "realtime":
-        status_lines = []
-        tasks_list = [
-            ("Kalibrr", scrape_kalibrr_task),
-            ("Indeed", scrape_indeed_task),
-            ("JobStreet", scrape_jobstreet_task),
-            ("LinkedIn", scrape_linkedin_task),
-        ]
-        for name, task in tasks_list:
-            if task.is_running():
-                next_run = task.next_iteration
-                if next_run:
-                    timestamp = int(next_run.timestamp())
-                    status_lines.append(f"✅ {name}: next <t:{timestamp}:R>")
-                else:
-                    status_lines.append(f"✅ {name}: running")
-            else:
-                status_lines.append(f"❌ {name}: stopped")
-        scheduler_status = "\n".join(status_lines)
-    else:
-        if scheduled_scrape.is_running():
-            next_run = scheduled_scrape.next_iteration
+    status_lines = []
+    tasks_list = [
+        ("Kalibrr", scrape_kalibrr_task),
+        ("Indeed", scrape_indeed_task),
+        ("JobStreet", scrape_jobstreet_task),
+        ("LinkedIn", scrape_linkedin_task),
+    ]
+    for name, task in tasks_list:
+        if task.is_running():
+            next_run = task.next_iteration
             if next_run:
                 timestamp = int(next_run.timestamp())
-                scheduler_status = (
-                    f"✅ Scheduled (every {config.CHECK_INTERVAL_HOURS}h)\n"
-                    f"Next: <t:{timestamp}:R>"
-                )
+                status_lines.append(f"✅ {name}: next <t:{timestamp}:R>")
             else:
-                scheduler_status = f"✅ Scheduled (every {config.CHECK_INTERVAL_HOURS}h)"
+                status_lines.append(f"✅ {name}: running")
         else:
-            scheduler_status = "❌ Stopped"
+            status_lines.append(f"❌ {name}: stopped")
+    scheduler_status = "\n".join(status_lines)
 
     embed.add_field(
-        name="⏰ Scheduler Mode",
-        value=f"Mode: **{config.SCRAPE_MODE.upper()}**\n{scheduler_status}",
+        name="⏰ Scheduler Status",
+        value=scheduler_status,
         inline=False,
     )
 
@@ -858,19 +804,13 @@ async def cmd_help_jobs(ctx: commands.Context) -> None:
     for name, desc in commands_list:
         embed.add_field(name=f"`{name}`", value=desc, inline=False)
 
-    if config.SCRAPE_MODE == "realtime":
-        scheduler_desc = (
-            "The bot automatically scrapes each site continuously at staggered intervals:\n"
-            f"- **Kalibrr**: every {config.KALIBRR_INTERVAL_MIN}m\n"
-            f"- **Indeed**: every {config.INDEED_INTERVAL_MIN}m\n"
-            f"- **JobStreet**: every {config.JOBSTREET_INTERVAL_MIN}m\n"
-            f"- **LinkedIn**: every {config.LINKEDIN_INTERVAL_MIN}m"
-        )
-    else:
-        scheduler_desc = (
-            f"The bot automatically scrapes every **{config.CHECK_INTERVAL_HOURS} hours** "
-            "and sends new jobs to the configured webhook."
-        )
+    scheduler_desc = (
+        "The bot automatically scrapes each site continuously at staggered intervals:\n"
+        f"- **Kalibrr**: every {config.KALIBRR_INTERVAL_MIN}m\n"
+        f"- **Indeed**: every {config.INDEED_INTERVAL_MIN}m\n"
+        f"- **JobStreet**: every {config.JOBSTREET_INTERVAL_MIN}m\n"
+        f"- **LinkedIn**: every {config.LINKEDIN_INTERVAL_MIN}m"
+    )
 
     embed.add_field(
         name="⏰ Automatic Scheduling",

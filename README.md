@@ -25,7 +25,6 @@ Scrapes software developer job postings from 4 Philippine job boards and notifie
    ```env
    DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
    DISCORD_BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN
-   SCRAPE_MODE=realtime
    ```
 
 ### Running Locally
