@@ -91,6 +91,17 @@ SEARCH_KEYWORDS: list[str] = [
     "sql developer",
     "programmer",
     "coder",
+    "vibe coder",
+    "ai engineer",
+    "ai software engineer",
+    "prompt engineer",
+    "junior developer",
+    "junior software developer",
+    "junior software engineer",
+    "junior web developer",
+    "junior frontend developer",
+    "junior backend developer",
+    "junior full stack developer",
 ]
 """Keywords used to search for software developer positions."""
 
