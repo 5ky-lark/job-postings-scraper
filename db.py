@@ -44,7 +44,7 @@ def init_db() -> None:
     """Create the database tables if they do not already exist.
 
     Creates:
-        - jobs table (id, title, company, location, url, source, salary, date_posted, first_seen)
+        - jobs table (id, title, company, location, url, source, salary, date_posted, description, first_seen)
         - scraper_metadata table (key, value) for persistence of configurations or execution times.
     """
     with _get_connection() as conn:
@@ -63,6 +63,12 @@ def init_db() -> None:
             )
             """
         )
+        # Migrate existing tables to include the description column
+        try:
+            conn.execute("ALTER TABLE jobs ADD COLUMN description TEXT")
+        except sqlite3.OperationalError:
+            pass  # Already has the column
+
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS scraper_metadata (
@@ -108,8 +114,8 @@ def save_job(job: dict[str, Any]) -> None:
     with _get_connection() as conn:
         conn.execute(
             """
-            INSERT OR IGNORE INTO jobs (id, title, company, location, url, source, salary, date_posted)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO jobs (id, title, company, location, url, source, salary, date_posted, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 job_id,
@@ -120,6 +126,7 @@ def save_job(job: dict[str, Any]) -> None:
                 job.get("source", ""),
                 job.get("salary", ""),
                 job.get("date_posted", ""),
+                job.get("description", ""),
             ),
         )
         conn.commit()
@@ -153,10 +160,13 @@ def save_jobs(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
             ).fetchone()
 
             if existing is None:
+                # Set first_seen timestamp to current time for immediate relative calculation
+                job["first_seen"] = datetime.now(timezone.utc).isoformat()
+                
                 conn.execute(
                     """
-                    INSERT INTO jobs (id, title, company, location, url, source, salary, date_posted)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO jobs (id, title, company, location, url, source, salary, date_posted, description)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         job_id,
@@ -167,6 +177,7 @@ def save_jobs(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
                         job.get("source", ""),
                         job.get("salary", ""),
                         job.get("date_posted", ""),
+                        job.get("description", ""),
                     ),
                 )
                 new_jobs.append(job)
@@ -203,7 +214,7 @@ def get_recent_jobs(hours: int = 24) -> list[dict[str, Any]]:
     with _get_connection() as conn:
         rows = conn.execute(
             """
-            SELECT id, title, company, location, url, source, salary, date_posted, first_seen
+            SELECT id, title, company, location, url, source, salary, date_posted, description, first_seen
             FROM jobs
             WHERE first_seen >= ?
             ORDER BY first_seen DESC

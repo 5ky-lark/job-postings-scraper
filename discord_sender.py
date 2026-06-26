@@ -108,13 +108,22 @@ class DiscordSender:
         company = job.get("company", "N/A") or "N/A"
         location = job.get("location", "N/A") or "N/A"
         salary = job.get("salary", "") or "Not specified"
-        date_posted = job.get("date_posted", "") or "Recently"
+        date_posted = job.get("date_posted", "").strip()
+        first_seen = job.get("first_seen", "")
+
+        if date_posted:
+            display_date = date_posted
+        elif first_seen:
+            from utils import format_time_ago
+            display_date = format_time_ago(first_seen)
+        else:
+            display_date = "Just now"
 
         description = (
             f"🏢 **Company:** {company}\n"
             f"📍 **Location:** {location}\n"
             f"💰 **Salary:** {salary}\n"
-            f"📅 **Posted:** {date_posted}\n"
+            f"📅 **Posted:** {display_date}\n"
             f"{icon} **Source:** {source.capitalize()}\n"
         )
 
