@@ -97,8 +97,6 @@ SEARCH_KEYWORDS: list[str] = [
 LOCATIONS: list[str] = [
     "Philippines",
     "Manila",
-    "Cebu",
-    "Davao",
     "Remote",
 ]
 """Target locations to include in job searches."""
